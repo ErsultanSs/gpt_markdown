@@ -75,7 +75,7 @@ class _CodeFieldState extends State<CodeField> {
             child: Text(
               widget.codes,
               style: TextStyle(
-                fontFamily: 'JetBrainsMono',
+                fontFamily: 'Inter',
                 package: "gpt_markdown",
               ),
             ),
