@@ -4,7 +4,7 @@ version: 1.1.0
 homepage: https://github.com/Infinitix-LLC/gpt_markdown
 
 environment:
-  sdk: '>=3.7.0 <4.0.0'
+  sdk: ">=3.7.0 <4.0.0"
   flutter: ">=3.29.0"
 
 dependencies:
@@ -19,9 +19,13 @@ dev_dependencies:
 
 flutter:
   fonts:
-    - family: JetBrainsMono
+    - family: Inter
       fonts:
-        - asset: lib/fonts/JetBrainsMono-Regular.ttf
+        - asset: fonts/Inter_18pt-Regular.ttf
+        - asset: fonts/Inter_18pt-Bold.ttf
+          weight: 700
+        - asset: fonts/Inter_18pt-Italic.ttf
+          style: italic
 
 topics:
   - markdown
