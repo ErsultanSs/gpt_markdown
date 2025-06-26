@@ -953,95 +953,75 @@ class TableMd extends BlockMd {
   @override
   String get expString =>
       (r"(((\|[^\n\|]+\|)((([^\n\|]+\|)+)?)\ *)(\n\ *(((\|[^\n\|]+\|)(([^\n\|]+\|)+)?))\ *)+)$");
+
   @override
   Widget build(
     BuildContext context,
     String text,
     final GptMarkdownConfig config,
   ) {
-    final List<Map<int, String>> value =
-        text
-            .split('\n')
-            .map<Map<int, String>>(
-              (e) =>
-                  e
-                      .trim()
-                      .split('|')
-                      .where((element) => element.isNotEmpty)
-                      .toList()
-                      .asMap(),
-            )
-            .toList();
-    bool heading = RegExp(
-      r"^\|.*?\|\n\|-[-\\ |]*?-\|$",
-      multiLine: true,
-    ).hasMatch(text.trim());
-    int maxCol = 0;
-    for (final each in value) {
-      if (maxCol < each.keys.length) {
-        maxCol = each.keys.length;
-      }
-    }
+    final List<Map<int, String>> value = text
+        .split('\n')
+        .map<Map<int, String>>(
+            (e) => e.trim().split('|').where((element) => element.isNotEmpty).toList().asMap())
+        .toList();
+
+    bool hasHeader = RegExp(r"^\|.*?\|\n\|-[-\s|]*?\|$", multiLine: true).hasMatch(text.trim());
+    int maxCol = value.fold<int>(0, (prev, element) => element.keys.length > prev ? element.keys.length : prev);
     if (maxCol == 0) {
       return Text("", style: config.style);
     }
+
     final controller = ScrollController();
     return Scrollbar(
       controller: controller,
       child: SingleChildScrollView(
         controller: controller,
         scrollDirection: Axis.horizontal,
-        child: Table(
-          textDirection: config.textDirection,
-          defaultColumnWidth: CustomTableColumnWidth(),
-          defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-          border: TableBorder.all(
-            width: 1,
-            color: Theme.of(context).colorScheme.onSurface,
-          ),
-          children:
-              value
-                  .asMap()
-                  .entries
-                  .map<TableRow>(
-                    (entry) => TableRow(
-                      decoration:
-                          (heading)
-                              ? BoxDecoration(
-                                color:
-                                    (entry.key == 0)
-                                        ? Theme.of(
-                                          context,
-                                        ).colorScheme.surfaceContainerHighest
-                                        : null,
-                              )
-                              : null,
-                      children: List.generate(maxCol, (index) {
-                        var e = entry.value;
-                        String data = e[index] ?? "";
-                        if (RegExp(r"^:?--+:?$").hasMatch(data.trim()) ||
-                            data.trim().isEmpty) {
-                          return const SizedBox();
-                        }
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Table(
+            textDirection: config.textDirection,
+            border: TableBorder.symmetric(
+              inside: BorderSide(color: Theme.of(context).dividerColor),
+            ),
+            columnWidths: {
+              for (var i = 0; i < maxCol; i++) i: const IntrinsicColumnWidth(),
+            },
+            children: value.asMap().entries.map<TableRow>((entry) {
+              final isHeader = hasHeader && entry.key == 0;
+              final isEvenRow = entry.key.isEven;
 
-                        return Center(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            child: MdWidget(
-                              context,
-                              (e[index] ?? "").trim(),
-                              false,
-                              config: config,
-                            ),
-                          ),
-                        );
-                      }),
+              return TableRow(
+                decoration: BoxDecoration(
+                  color: isHeader
+                      ? Theme.of(context).colorScheme.surfaceContainerHighest
+                      : (isEvenRow
+                          ? Theme.of(context).colorScheme.surface
+                          : Theme.of(context).colorScheme.surfaceContainerLow),
+                ),
+                children: List.generate(maxCol, (index) {
+                  var e = entry.value;
+                  String data = e[index]?.trim() ?? '';
+                  if (RegExp(r"^:?--+:?$").hasMatch(data) || data.isEmpty) {
+                    return const SizedBox();
+                  }
+
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    child: Center(
+                      child: MdWidget(
+                        context,
+                        data,
+                        false,
+                        config: config,
+                      ),
                     ),
-                  )
-                  .toList(),
+                  );
+                }),
+              );
+            }).toList(),
+          ),
         ),
       ),
     );
